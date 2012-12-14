@@ -1,0 +1,49 @@
+#!/bin/bash
+# get current dir
+echo -e "Tell me under which user runs your webserver? (Using apache as default): \c "
+read user
+if [ -z $user ]; then
+    user="apache"
+fi
+echo -e "What is the owner username? (Using `whoami` as default): \c "
+read owner
+if [ -z $owner ]; then
+    owner="`whoami`"
+fi
+dir=`pwd`
+cache_dir="$dir/app/cache"
+logs_dir="$dir/app/logs"
+error=false
+if [ ! -d "$cache_dir" ]; then
+    echo "Error: /app/cache directory not found in $dir!"
+    error=true
+fi
+
+if [ ! -d "$logs_dir" ]; then
+    echo "Error: /app/logs directory not found in $dir!"
+    error=true
+fi
+
+if $error; then
+    echo "Quiting... Are you sure this is a Symfony2 project and we're located in the root?"
+    exit 1
+fi
+
+sudo setfacl -R -m u:$user:rwx -m u:$owner:rwx $cache_dir $logs_dir
+
+if [ $? -eq 0 ]; then
+    echo "Command succeeded!"
+else
+    echo "Command failed!"
+    exit 1
+fi
+sudo setfacl -dR -m u:$user:rwx -m u:$owner:rwx $cache_dir $logs_dir
+if [ $? -eq 0 ]; then
+    echo "Command succeeded!"
+else
+    echo "Command failed!"
+    exit 1
+fi
+
+echo "Permission set successfully. Have a nice day!"
+exit 0
